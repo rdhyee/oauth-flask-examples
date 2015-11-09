@@ -1,5 +1,7 @@
 # https://requests-oauthlib.readthedocs.org/en/latest/examples/real_world_example.html#real-example
-# need to run OAUTHLIB_INSECURE_TRANSPORT=1 python github_flask_oauth2.py (if without SSL)
+# need to run
+#     OAUTHLIB_INSECURE_TRANSPORT=1 python github_flask_oauth2.py
+# (if without SSL)
 
 from requests_oauthlib import OAuth2Session
 from flask import Flask, request, redirect, session, url_for
@@ -7,7 +9,7 @@ from flask.json import jsonify
 import os
 
 # storing KEY, SECRET in settings.py
-from settings import (GITHUB_CONSUMER_KEY, GITHUB_CONSUMER_SECRET)
+from settings import (GITHUB_CONSUMER_KEY, GITHUB_CONSUMER_SECRET, GITHUB_REDIRECT_URI)
 
 app = Flask(__name__)
 
@@ -17,9 +19,10 @@ app = Flask(__name__)
 # https://github.com/settings/applications/261763
 client_id = GITHUB_CONSUMER_KEY
 client_secret = GITHUB_CONSUMER_SECRET
+redirect_uri = GITHUB_REDIRECT_URI
+
 authorization_base_url = 'https://github.com/login/oauth/authorize'
 token_url = 'https://github.com/login/oauth/access_token'
-
 
 
 @app.route("/")
@@ -29,7 +32,7 @@ def demo():
     Redirect the user/resource owner to the OAuth provider (i.e. Github)
     using an URL with a few key OAuth parameters.
     """
-    github = OAuth2Session(client_id)
+    github = OAuth2Session(client_id, redirect_uri=redirect_uri)
     authorization_url, state = github.authorization_url(authorization_base_url)
 
     # State is used to prevent CSRF, keep this for later.
@@ -73,4 +76,4 @@ if __name__ == "__main__":
     os.environ['DEBUG'] = "1"
 
     app.secret_key = os.urandom(24)
-    app.run(debug=True)
+    app.run(debug=True, port=5050)
