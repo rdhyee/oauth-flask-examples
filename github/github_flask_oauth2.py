@@ -8,11 +8,12 @@ from flask import Flask, request, redirect, session, url_for
 from flask.json import jsonify
 import os
 
-# storing KEY, SECRET in settings.py
-from settings import (GITHUB_CONSUMER_KEY, GITHUB_CONSUMER_SECRET, GITHUB_REDIRECT_URI)
+# pick up keys from env
+GITHUB_CONSUMER_KEY = os.environ.get('GITHUB_CONSUMER_KEY')
+GITHUB_CONSUMER_SECRET = os.environ.get('GITHUB_CONSUMER_SECRET')
+GITHUB_REDIRECT_URI = os.environ.get('GITHUB_REDIRECT_URI')
 
 app = Flask(__name__)
-
 
 # This information is obtained upon registration of a new GitHub OAuth
 # application here: https://github.com/settings/applications/new
@@ -32,6 +33,7 @@ def demo():
     Redirect the user/resource owner to the OAuth provider (i.e. Github)
     using an URL with a few key OAuth parameters.
     """
+
     github = OAuth2Session(client_id, redirect_uri=redirect_uri)
     authorization_url, state = github.authorization_url(authorization_base_url)
 
@@ -76,4 +78,4 @@ if __name__ == "__main__":
     os.environ['DEBUG'] = "1"
 
     app.secret_key = os.urandom(24)
-    app.run(debug=True, port=5050)
+    app.run(host="0.0.0.0", debug=True, port=5000)
