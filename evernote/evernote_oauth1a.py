@@ -6,7 +6,11 @@ from requests_oauthlib import OAuth1Session
 from flask import Flask, request, redirect, session, url_for
 from flask.json import jsonify
 
-from settings import EVERNOTE_CONSUMER_KEY, EVERNOTE_CONSUMER_SECRET
+EVERNOTE_CONSUMER_KEY = os.environ.get("EVERNOTE_CONSUMER_KEY")
+EVERNOTE_CONSUMER_SECRET = os.environ.get("EVERNOTE_CONSUMER_SECRET")
+EVERNOTE_PRODUCTION = os.environ.get("EVERNOTE_PRODUCTION", 'False')  #default to sandbox
+EVERNOTE_DEV_AUTH_TOKEN = os.environ.get("EVERNOTE_DEV_AUTH_TOKEN", '')
+EVERNOTE_CALLBACK_URI = os.environ.get("EVERNOTE_CALLBACK_URI")
 
 app = Flask(__name__)
 
@@ -15,20 +19,24 @@ app = Flask(__name__)
 client_id = EVERNOTE_CONSUMER_KEY
 client_secret = EVERNOTE_CONSUMER_SECRET
 
-request_token_url = 'https://sandbox.evernote.com/oauth'
-authorization_base_url = 'https://sandbox.evernote.com/OAuth.action'
-access_token_url = 'https://sandbox.evernote.com/oauth'
+BASE_URL = "https://www.evernote.com" if EVERNOTE_PRODUCTION == 'True' \
+           else "https://sandbox.evernote.com"
 
-callback_uri = 'http://localhost:5000/callback'
+request_token_url = '{}/oauth'.format(BASE_URL)
+authorization_base_url = '{}/OAuth.action'.format(BASE_URL)
+access_token_url = '{}/oauth'.format(BASE_URL)
+
+callback_uri = EVERNOTE_CALLBACK_URI
+
 
 @app.route("/")
 def demo():
     """Step 1: User Authorization.
 
     Redirect the user/resource owner to the OAuth provider (i.e. Github)
-    using an URL with a few key OAuth parameters.   
+    using an URL with a few key OAuth parameters.
     """
-    
+
     evernote = OAuth1Session(client_id, client_secret=client_secret,
          callback_uri=callback_uri)
     fetch_response = evernote.fetch_request_token(request_token_url)
@@ -53,16 +61,16 @@ def callback():
 
     resource_owner_key = str(session.get('resource_owner_key'))
     resource_owner_secret = str(session.get('resource_owner_secret'))
-    
+
     #return (resource_owner_key + "|" + resource_owner_secret)
-    
+
     evernote = OAuth1Session(client_key = client_id,
                           client_secret = client_secret,
                           resource_owner_key = resource_owner_key,
                           resource_owner_secret = resource_owner_secret)
-                          
+
     oauth_response = evernote.parse_authorization_response(request.url)
-    
+
     token_dict = evernote.fetch_access_token(access_token_url)
 
     # At this point you can fetch protected resources but lets save
@@ -77,7 +85,7 @@ def callback():
 def profile():
     """Fetching a protected resource using an OAuth 1 token.
     """
-    
+
     import hashlib
     import binascii
     import evernote.edam.userstore.constants as UserStoreConstants
@@ -87,9 +95,9 @@ def profile():
 
     auth_token = session['oauth_token']
     client = EvernoteClient(token=auth_token, sandbox=True)
-    
+
     user_store = client.get_user_store()
-    
+
     version_ok = user_store.checkVersion(
         "Evernote EDAMTest (Python)",
         UserStoreConstants.EDAM_VERSION_MAJOR,
@@ -97,17 +105,15 @@ def profile():
     )
 
     note_store = client.get_note_store()
-    
+
     # List all of the notebooks in the user's account
     notebooks = note_store.listNotebooks()
     return ", " .join([notebook.name for notebook in notebooks])
-    
+
 
 if __name__ == "__main__":
     # This allows us to use a plain HTTP callback
     os.environ['DEBUG'] = "1"
 
     app.secret_key = os.urandom(24)
-    app.run(debug=True)
-
-
+    app.run(host="0.0.0.0", port=5000, debug=True)
