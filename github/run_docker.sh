@@ -8,6 +8,8 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout server.key -out serv
 docker cp server.crt certs:/etc/nginx/certs/github-oauth.ydns.eu.crt
 docker cp server.key certs:/etc/nginx/certs/github-oauth.ydns.eu.key
 
+source setenv.sh
+
 # jupyter stack images (don't map local drive)
 docker run -d --name github  \
    -e VIRTUAL_HOST=github-oauth.ydns.eu \

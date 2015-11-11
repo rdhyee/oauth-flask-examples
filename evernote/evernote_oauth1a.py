@@ -94,7 +94,8 @@ def profile():
     from evernote.api.client import EvernoteClient
 
     auth_token = session['oauth_token']
-    client = EvernoteClient(token=auth_token, sandbox=True)
+    client = EvernoteClient(token=auth_token,
+         sandbox=True if EVERNOTE_PRODUCTION == 'False' else False)
 
     user_store = client.get_user_store()
 
@@ -108,7 +109,7 @@ def profile():
 
     # List all of the notebooks in the user's account
     notebooks = note_store.listNotebooks()
-    return ", " .join([notebook.name for notebook in notebooks])
+    return "<br/>" .join([notebook.name for notebook in notebooks])
 
 
 if __name__ == "__main__":
